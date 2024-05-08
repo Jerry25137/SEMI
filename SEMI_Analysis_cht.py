@@ -42,6 +42,7 @@ SDS=round(SDsS*Fa,2)
 st.write(SDsS_t, str("="), SDsS)
 st.write(Fa_t, str("="), Fa)
 st.write(SDS_t, str("="), SDsS_t, str("*"), Fa_t, str("="), SDS)
+
 st.write("")
 
 #ap
@@ -89,8 +90,9 @@ hn=0
 hx=0
 hn=st.text_input("請輸入總樓高 [m]：",0)
 hx=st.text_input("請輸入樓層高 [m]：",0)
-hx=float(hx)
 hn=float(hn)
+hx=float(hx)
+
 #if hn!=0:
     #st.write(hx/hn)
 st.write("")
@@ -104,7 +106,7 @@ st.write("")
 #st.write("Table R4-3 Key Variables")
 st.subheader(":black[設備參數]")
 st.write("請輸入下列參數的數值：","Wp", ", Z", ", L", ", X", ", N")
-Wp_note="機台重量。"
+Wp_note="設備重量。"
 G_note="設備重心。"
 Z_note="地板至重心高度。"
 L_note="地腳螺絲至重心的最短距離。"
@@ -151,14 +153,15 @@ st.dataframe(r4_3_2, hide_index=True)
 
 #示意圖
 
-fig=st.file_uploader("上傳示意圖")
-if st.button("套用"):
-    fig1=fig
-else:
-    fig1="fig1.png" 
+fig1="fig1.png" 
+on = st.toggle("變更示意圖")
+if on:
+    fig1=st.file_uploader("上傳示意圖")
+    if fig1==None:
+        fig1="fig1.png"
+
 col1, col2, col3 = st.columns(3)
-with col1:  
-    
+with col1:      
     st.image(fig1)
 with col2:
     st.image("fig2.png")
@@ -166,17 +169,36 @@ with col3:
     st.image("fig3.png")
 st.write("")
 
-#計算
-if st.button("計算結果", type="primary"):
-    #ΣM
-    st.write(str("ΣM = ( ") + Fph_t + str(" x Z ) - ( R x X x n ) - ( ") + WE_t + str(" x L ) = 0"))
 
-    try:
+if st.button("計算結果", type="primary"):
+    #ERROR CODE
+    if SDS<=0:
+        st.write(":red[Error：SDS 必須 > 0。]")
+    if hn<=0:
+        st.write(":red[Error：hn 總樓高，必須 > 0。]")
+    if hx<=0 or hx>hn:
+        st.write(":red[Error：hx 樓層高，必須 > 0、hx =< hn。]")
+    if Wp<=0:
+        st.write(":red[Error：Wp 機台重量，必須 > 0。]")
+    if Z<0:
+        st.write(":red[Error：Z 地板至重心高度，必須 >= 0。]")
+    if L<=0 or L>X:
+        st.write(":red[Error：L 距離，必須 >= 0 & 必須 <= X。]")
+    if X<=0:
+        st.write(":red[Error：X 距離，必須 >= 0。]")
+    if N<0 or n<0:
+        st.write(":red[Error：N、n 地腳螺絲，必須 >= 0。]")
+    
+    #計算
+    if SDS>0 and hn>0 and hx>0 and hx<=hn and Wp>0 and Z>=0 and L>0 and X>0 and N>=0 and n>=0:
+        #ΣM
+        st.write(str("ΣM = ( ") + Fph_t + str(" x Z ) - ( R x X x n ) - ( ") + WE_t + str(" x L ) = 0"))
+    
         #Fph
         Fph    = round(0.4*SDS*Ip*(ap/Rpa)*(1+2*hx/hn)*Wp, 3)
         Fphmax = round(1.6*SDS*Ip*Wp, 3)
         Fphmin = round(0.3*SDS*Ip*Wp, 3)
-
+    
         if Fph>Fphmax:
             Fph=Fphmax
             st.write(Fph_t+str(" = 1.6 x ")+SDS_t+str(" x ")+Ip_t+str(" x ")+Wp_t+str(" = "), Fph, str(" kg"))           
@@ -198,41 +220,49 @@ if st.button("計算結果", type="primary"):
         st.write("")
         
         #R、r
-        R   = round(((Fph*Z)-(WE*L))/(X*n), 3)
-        r   = round(Fph/n, 3)
-        RSF = round(bolt_t/R, 2)
-        rSF = round(bolt_s/r, 2)
-        
-        st.subheader(":blue[傾倒力計算]")
-        st.write(str("R = [ ( ") + Fph_t + str(" x Z ) - (")+ WE_t + str(" x L ) ] / ( X x n) = "), R, str(" [kg]"))
-        if R>=0 and RSF>=SF:
-            st.write(str("SF of R = "), RSF)
-            st.write("地腳螺絲承受張力！")
-            st.write(":blue[_安全係數：_]:ok:")
-        elif R>=0 and RSF<=SF:
-            st.write(str("SF of R = "), RSF)
-            st.write("地腳螺絲承受張力！")
-            st.write(":red[_安全係數不足：_]:x:")
-        elif R<=0:
-            st.write(str("SF of R >= "), SF)
-            st.write("地腳螺絲不受力！")
-        st.write("")
-        
-        st.subheader(":blue[側向剪力計算]")
-        st.write(str("r = ") + Fph_t + str(" / n = "), r, str(" [kg]"))
-        st.write(str("SF of r = "), rSF)
-        if rSF>=SF:
-            st.write(":blue[_安全係數：_]:ok:")
-        else:
-            st.write(":red[_安全係數不足：_]:x:")
-        
-    except Exception as e:
-        st.write(e)
+        if n>0:
+            R   = round(((Fph*Z)-(WE*L))/(X*n), 3)
+            r   = round(Fph/n, 3)
+            RSF = round(bolt_t/R, 2)
+            rSF = round(bolt_s/r, 2)
+            
+            st.subheader(":blue[:u6709:地腳螺絲 - 傾倒力計算]")
+            st.write(str("R = [ ( ") + Fph_t + str(" x Z ) - (")+ WE_t + str(" x L ) ] / ( X x n) = "), R, str(" [kg]"))
+            if R>=0 and RSF>=SF:
+                st.write(str("SF of R = "), RSF)
+                st.write(":arrow_right: 地腳螺絲承受張力！")
+                st.write(":blue[_安全係數：_]:ok:")
+            elif R>=0 and RSF<=SF:
+                st.write(str("SF of R = "), RSF)
+                st.write(":arrow_right: 地腳螺絲承受張力！")
+                st.write(":red[_安全係數不足：_]:x:")
+            elif R<=0:
+                st.write(str("SF of R >= "), SF)
+                st.write(":arrow_right: 地腳螺絲不受力！")
+            st.write("")
+            
+            st.subheader(":blue[:u6709:地腳螺絲 - 側向剪力計算]")
+            st.write(str("r = ") + Fph_t + str(" / n = "), r, str(" [kg]"))
+            st.write(str("SF of r = "), rSF)
+            if rSF>=SF:
+                st.write(":blue[_安全係數：_]:ok:")
+            else:
+                st.write(":red[_安全係數不足：_]:x:")
+        elif n==0:
+            st.subheader(":blue[:u7121:地腳螺絲]")
+            st.write("R = 0 & r = 0")
+            if Fph*Z >= WE*L:
+               st.write(str("( ") + Fph_t + str(" x Z ) >= (")+ WE_t + str(" x L )"))
+               st.write("設備:u6709:傾倒風險！ :ng: :x:")
+            elif Fph*Z < WE*L:
+               st.write(str("( ") + Fph_t + str(" x Z ) =< (")+ WE_t + str(" x L )"))
+               st.write("設備:u7121:傾倒風險！ :ok:")
     st.write("")
     
 st.subheader(":black[References]")
 st.link_button("[1] Background Statement for SEMI Draft Document 5556B","http://downloads.semi.org/web/wstdsbal.nsf/de4d7939711aeedf8825753e0078317f/ddb843853af6b91788257f9c002f7d25/$FILE/5556B.pdf")
 st.link_button("[2] 建築物耐震設計規範及解說部分規定修正規定","https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg028109/ch02/type2/gov10/num4/images/Eg01.pdf")
 st.write("")
-st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1]")
+st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1.1]")
+st.write(":orange[Design by HSIAO, YC]")
 #"Summary"
