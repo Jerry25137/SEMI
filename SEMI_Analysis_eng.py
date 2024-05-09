@@ -150,11 +150,13 @@ r4_3_2=pd.DataFrame({
 st.dataframe(r4_3_2, hide_index=True)
 
 #示意圖
-fig=st.file_uploader("Upload Schematic")
-if st.button("Apply"):
-    fig1=fig
-else:
-    fig1="fig1.png"
+fig1="fig1.png" 
+on = st.toggle("變更示意圖")
+if on:
+    fig1=st.file_uploader("上傳示意圖")
+    if fig1==None:
+        fig1="fig1.png"
+
 col1, col2, col3 = st.columns(3)
 with col1:
     st.image(fig1)
@@ -166,15 +168,15 @@ st.write("")
 
 #計算
 if st.button("Calculate", type="primary"):
-    #ΣM
-    st.write(str("ΣM = ( ") + Fph_t + str(" x Z ) - ( R x X x n ) - ( ") + WE_t + str(" x L ) = 0"))
-
-    try:
+    if SDS>0 and hn>0 and hx>0 and hx<=hn and Wp>0 and Z>=0 and L>0 and X>0 and N>=0 and n>=0:
+        #ΣM
+        st.write(str("ΣM = ( ") + Fph_t + str(" x Z ) - ( R x X x n ) - ( ") + WE_t + str(" x L ) = 0"))
+    
         #Fph
         Fph    = round(0.4*SDS*Ip*(ap/Rpa)*(1+2*hx/hn)*Wp, 3)
         Fphmax = round(1.6*SDS*Ip*Wp, 3)
         Fphmin = round(0.3*SDS*Ip*Wp, 3)
-
+    
         if Fph>Fphmax:
             Fph=Fphmax
             st.write(Fph_t+str(" = 1.6 x ")+SDS_t+str(" x ")+Ip_t+str(" x ")+Wp_t+str(" = "), Fph, str(" kg"))           
@@ -191,45 +193,54 @@ if st.button("Calculate", type="primary"):
         st.write(Fpv_t + str(" = ") + Fph_t + str(" x 2 / 3 = "), Fpv, str(" [kg]"))
         
         #WE
-        WE = round(Fpv - Wp, 3)
+        WE = round(Wp - Fpv, 3)
         st.write(WE_t + str(" = ") + Fpv_t + str(" - ")+ Wp_t + str(" = "), WE, str(" [kg]"))
         st.write("")
         
         #R、r
-        R   = round(((Fph*Z)-(WE*L))/(X*n), 3)
-        r   = round(Fph/n, 3)
-        RSF = round(bolt_t/R, 2)
-        rSF = round(bolt_s/r, 2)
-        
-        st.subheader(":blue[Calculation of Overturning Force]")
-        st.write(str("R = [ ( ") + Fph_t + str(" x Z ) - (")+ WE_t + str(" x L ) ] / ( X x n) = "), R, str(" [kg]"))
-        if R>=0 and RSF>=SF:
-            st.write(str("SF of R = "), RSF)
-            st.write("Tensile stress on the anchor bolts")
-            st.write(":blue[_Safety factor is adequate._]:ok:")
-        elif R>=0 and RSF<=SF:
-            st.write(str("SF of R = "), RSF)
-            st.write("Tensile stress on the anchor bolts")
-            st.write(":red[_Safety factor is inadequate._]:x:")
-        elif R<=0:
-            st.write(str("SF of R >= "), SF)
-            st.write("The screw is not stressed")
-        st.write("")
-        
-        st.subheader(":blue[Calculation of Lateral Force]")
-        st.write(str("r = ") + Fph_t + str(" / n = "), r, str(" [kg]"))
-        st.write(str("SF of r = "), rSF)
-        if rSF>=SF:
-            st.write(":blue[_Safety factor is adequate._]:ok:")
-        else:
-            st.write(":red[_Safety factor is inadequate._]:x:")
-    except Exception as e:
-        st.write(e)
+        if n>0:
+            R   = round(((Fph*Z)-(WE*L))/(X*n), 3)
+            r   = round(Fph/n, 3)
+            RSF = round(bolt_t/R, 2)
+            rSF = round(bolt_s/r, 2)
+            
+            st.subheader(":blue[With Anchor Bolts - Calculation of Overturning Force]")
+            st.write(str("R = [ ( ") + Fph_t + str(" x Z ) - (")+ WE_t + str(" x L ) ] / ( X x n) = "), R, str(" [kg]"))
+            if R>=0 and RSF>=SF:
+                st.write(str("SF of R = "), RSF)
+                st.write("Tensile stress on the anchor bolts")
+                st.write(":blue[_Safety factor is adequate._]:ok:")
+            elif R>=0 and RSF<=SF:
+                st.write(str("SF of R = "), RSF)
+                st.write("Tensile stress on the anchor bolts")
+                st.write(":red[_Safety factor is inadequate._]:x:")
+            elif R<=0:
+                st.write(str("SF of R >= "), SF)
+                st.write("The screw is not stressed")
+            st.write("")
+            
+            st.subheader(":blue[With Anchor Bolts - Calculation of Lateral Force]")
+            st.write(str("r = ") + Fph_t + str(" / n = "), r, str(" [kg]"))
+            st.write(str("SF of r = "), rSF)
+            if rSF>=SF:
+                st.write(":blue[_Safety factor is adequate._]:ok:")
+            else:
+                st.write(":red[_Safety factor is inadequate._]:x:")
+        elif n==0:
+            st.subheader(":blue[Without Anchor Bolts]")
+            st.write("R = 0 & r = 0")
+            if Fph*Z >= WE*L:
+               st.write(str("( ") + Fph_t + str(" x Z ) >= (")+ WE_t + str(" x L )"))
+               st.write("The equipment will begin to overturn. :ng: :x:")
+            elif Fph*Z < WE*L:
+               st.write(str("( ") + Fph_t + str(" x Z ) =< (")+ WE_t + str(" x L )"))
+               st.write("The equipment won't  begin to overturn. :ok:")
     st.write("")
     
 st.subheader(":black[References]")
 st.link_button("[1] Background Statement for SEMI Draft Document 5556B","http://downloads.semi.org/web/wstdsbal.nsf/de4d7939711aeedf8825753e0078317f/ddb843853af6b91788257f9c002f7d25/$FILE/5556B.pdf")
 st.link_button("[2] 建築物耐震設計規範及解說部分規定修正規定","https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg028109/ch02/type2/gov10/num4/images/Eg01.pdf")
 st.write("")
-st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1]")
+st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1.2]")
+st.write(":orange[Design by HSIAO, YC]")
 #"Summary"

@@ -42,7 +42,6 @@ SDS=round(SDsS*Fa,2)
 st.write(SDsS_t, str("="), SDsS)
 st.write(Fa_t, str("="), Fa)
 st.write(SDS_t, str("="), SDsS_t, str("*"), Fa_t, str("="), SDS)
-
 st.write("")
 
 #ap
@@ -152,7 +151,6 @@ r4_3_2=pd.DataFrame({
 st.dataframe(r4_3_2, hide_index=True)
 
 #示意圖
-
 fig1="fig1.png" 
 on = st.toggle("變更示意圖")
 if on:
@@ -215,7 +213,7 @@ if st.button("計算結果", type="primary"):
         st.write(Fpv_t + str(" = ") + Fph_t + str(" x 2 / 3 = "), Fpv, str(" [kg]"))
         
         #WE
-        WE = round(Fpv - Wp, 3)
+        WE = round(Wp - Fpv, 3)
         st.write(WE_t + str(" = ") + Fpv_t + str(" - ")+ Wp_t + str(" = "), WE, str(" [kg]"))
         st.write("")
         
@@ -263,6 +261,6 @@ st.subheader(":black[References]")
 st.link_button("[1] Background Statement for SEMI Draft Document 5556B","http://downloads.semi.org/web/wstdsbal.nsf/de4d7939711aeedf8825753e0078317f/ddb843853af6b91788257f9c002f7d25/$FILE/5556B.pdf")
 st.link_button("[2] 建築物耐震設計規範及解說部分規定修正規定","https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg028109/ch02/type2/gov10/num4/images/Eg01.pdf")
 st.write("")
-st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1.1]")
+st.write(":orange[SEMI Seismic Protection Analysis PROG_ver.1.2]")
 st.write(":orange[Design by HSIAO, YC]")
 #"Summary"
